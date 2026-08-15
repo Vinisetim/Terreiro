@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import { GraduationCap, Award, BookOpen, Library, Settings, Monitor, LayoutDashboard, Calendar, Building2, ClipboardList, Clock, Info, CheckCircle2, XCircle, AlertCircle, FileText, Menu, ArrowLeftRight, Inbox, CalendarDays } from 'lucide-react'
+import { StatCard } from './components/cards/StatCard'
+import { SpaceCard } from './components/cards/SpaceCard'
+import { EventCard } from './components/cards/EventCard'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,13 +76,13 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   IT_TECH: 'Visualiza laboratórios, reservas e atualiza recursos',
 }
 
-const ROLE_ICONS: Record<UserRole, string> = {
-  STUDENT: '🎓',
-  CLASS_REP: '🏅',
-  TEACHER: '📚',
-  LIBRARIAN: '📖',
-  ADMIN: '⚙️',
-  IT_TECH: '💻',
+const ROLE_ICONS: Record<UserRole, React.ReactNode> = {
+  STUDENT: <GraduationCap size={20} />,
+  CLASS_REP: <Award size={20} />,
+  TEACHER: <BookOpen size={20} />,
+  LIBRARIAN: <Library size={20} />,
+  ADMIN: <Settings size={20} />,
+  IT_TECH: <Monitor size={20} />,
 }
 
 const STATUS_LABELS: Record<ReservationStatus, string> = {
@@ -199,24 +203,12 @@ function Btn({ children, variant = 'primary', onClick, small, icon, disabled, st
   return <button style={{ ...base, ...styles[variant] }} onClick={onClick} disabled={disabled}>{icon}{children}</button>
 }
 
-function StatCard({ label, value, icon, accent }: { label: string; value: string | number; icon: string; accent?: boolean }) {
-  return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-      <div style={{ width: 48, height: 48, borderRadius: 12, background: accent ? 'var(--etec-red-light)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-        {icon}
-      </div>
-      <div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: accent ? 'var(--etec-red)' : 'var(--text-1)', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 3, fontWeight: 500 }}>{label}</div>
-      </div>
-    </div>
-  )
-}
 
-function EmptyState({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
+
+function EmptyState({ icon, title, sub }: { icon: React.ReactNode; title: string; sub?: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '56px 24px', color: 'var(--text-3)', gap: 12, textAlign: 'center' }}>
-      <div style={{ fontSize: 40 }}>{icon}</div>
+      <div style={{ color: 'var(--border)' }}>{icon}</div>
       <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-2)' }}>{title}</div>
       {sub && <div style={{ fontSize: 13 }}>{sub}</div>}
     </div>
@@ -331,15 +323,15 @@ function ProfileSelectScreen({ onSelect }: { onSelect: (user: User) => void }) {
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
-interface NavItem { id: Screen; label: string; icon: string; roles: UserRole[] | 'all' }
+interface NavItem { id: Screen; label: string; icon: React.ReactNode; roles: UserRole[] | 'all' }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: '▦', roles: 'all' },
-  { id: 'agenda', label: 'Agenda', icon: '📅', roles: 'all' },
-  { id: 'spaces', label: 'Espaços', icon: '🏫', roles: 'all' },
-  { id: 'my-reservations', label: 'Minhas Reservas', icon: '📋', roles: ['STUDENT', 'CLASS_REP', 'TEACHER', 'LIBRARIAN', 'IT_TECH', 'ADMIN'] },
-  { id: 'academic', label: 'Agenda Acadêmica', icon: '🎓', roles: 'all' },
-  { id: 'admin', label: 'Administração', icon: '⚙️', roles: ['ADMIN', 'LIBRARIAN'] },
+  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, roles: 'all' },
+  { id: 'agenda', label: 'Agenda', icon: <Calendar size={20} />, roles: 'all' },
+  { id: 'spaces', label: 'Espaços', icon: <Building2 size={20} />, roles: 'all' },
+  { id: 'my-reservations', label: 'Minhas Reservas', icon: <ClipboardList size={20} />, roles: ['STUDENT', 'CLASS_REP', 'TEACHER', 'LIBRARIAN', 'IT_TECH', 'ADMIN'] },
+  { id: 'academic', label: 'Agenda Acadêmica', icon: <GraduationCap size={20} />, roles: 'all' },
+  { id: 'admin', label: 'Administração', icon: <Settings size={20} />, roles: ['ADMIN', 'LIBRARIAN'] },
 ]
 
 function Sidebar({ currentScreen, currentUser, onNavigate, onSwitchProfile, collapsed, onToggle }: { currentScreen: Screen; currentUser: User; onNavigate: (s: Screen) => void; onSwitchProfile: () => void; collapsed: boolean; onToggle: () => void }) {
@@ -419,10 +411,10 @@ function Topbar({ title, subtitle, onNewReservation, onMenuToggle, canReserve }:
 
 // ─── Dashboard Screen ─────────────────────────────────────────────────────────
 
-function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; onNavigate: (s: Screen) => void; onNewReservation: () => void }) {
-  const todayRes = RESERVATIONS.filter(r => r.date === today)
-  const available = SPACES.filter(s => s.active && !RESERVATIONS.some(r => r.date === today && r.spaceId === s.id && r.status === 'APPROVED')).length
-  const pending = RESERVATIONS.filter(r => r.status === 'PENDING').length
+function DashboardScreen({ user, onNavigate, onNewReservation, reservations }: { user: User; onNavigate: (s: Screen) => void; onNewReservation: () => void; reservations: Reservation[] }) {
+  const todayRes = reservations.filter(r => r.date === today)
+  const available = SPACES.filter(s => s.active && !reservations.some(r => r.date === today && r.spaceId === s.id && r.status === 'APPROVED')).length
+  const pending = reservations.filter(r => r.status === 'PENDING').length
   const upcoming = ACADEMIC_EVENTS.filter(e => e.date >= today).length
 
   const weekDays = getWeekDays(today)
@@ -437,10 +429,10 @@ function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; o
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
-        <StatCard label="Reservas hoje" value={todayRes.length} icon="📅" accent />
-        <StatCard label="Espaços disponíveis" value={available} icon="🏫" />
-        <StatCard label="Pendências" value={pending} icon="⏳" />
-        <StatCard label="Próximos eventos" value={upcoming} icon="🎓" />
+        <StatCard label="Reservas hoje" value={todayRes.length} icon={<Calendar size={24} />} variant="accent" />
+        <StatCard label="Espaços disponíveis" value={available} icon={<Building2 size={24} />} variant="success" />
+        <StatCard label="Pendências" value={pending} icon={<Clock size={24} />} variant="warning" />
+        <StatCard label="Próximos eventos" value={upcoming} icon={<GraduationCap size={24} />} variant="neutral" />
       </div>
 
       {/* Two columns */}
@@ -454,7 +446,7 @@ function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; o
               <button onClick={() => onNavigate('agenda')} style={{ background: 'none', border: 'none', color: 'var(--etec-red)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Ver agenda →</button>
             </div>
             <div>
-              {todayRes.length === 0 ? <EmptyState icon="📭" title="Nenhuma reserva hoje" /> : todayRes.map(r => (
+              {todayRes.length === 0 ? <EmptyState icon={<Inbox size={48} />} title="Nenhuma reserva hoje" /> : todayRes.map(r => (
                 <div key={r.id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</div>
@@ -473,7 +465,7 @@ function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; o
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0 }}>
               {weekDays.map((d, i) => {
-                const dayRes = RESERVATIONS.filter(r => r.date === d)
+                const dayRes = reservations.filter(r => r.date === d)
                 const isToday = d === today
                 return (
                   <div key={d} style={{ padding: '14px 12px', borderRight: i < 4 ? '1px solid var(--border)' : 'none', background: isToday ? 'var(--etec-red-light)' : 'transparent' }}>
@@ -497,10 +489,10 @@ function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; o
             <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Atalhos rápidos</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { icon: '📅', label: 'Nova reserva', action: onNewReservation, primary: true },
-                { icon: '🗓️', label: 'Ver agenda', action: () => onNavigate('agenda') },
-                { icon: '🏫', label: 'Consultar espaços', action: () => onNavigate('spaces') },
-                { icon: '🎓', label: 'Agenda acadêmica', action: () => onNavigate('academic') },
+                { icon: <Calendar size={18} />, label: 'Nova reserva', action: onNewReservation, primary: true },
+                { icon: <CalendarDays size={18} />, label: 'Ver agenda', action: () => onNavigate('agenda') },
+                { icon: <Building2 size={18} />, label: 'Consultar espaços', action: () => onNavigate('spaces') },
+                { icon: <GraduationCap size={18} />, label: 'Agenda acadêmica', action: () => onNavigate('academic') },
               ].map(q => (
                 <button key={q.label} onClick={q.action} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${q.primary ? 'var(--etec-red)' : 'var(--border)'}`, background: q.primary ? 'var(--etec-red-light)' : 'var(--surface)', color: q.primary ? 'var(--etec-red)' : 'var(--text-1)', fontWeight: 600, fontSize: 14, cursor: 'pointer', textAlign: 'left', transition: 'background 0.12s' }}>
                   <span style={{ fontSize: 18 }}>{q.icon}</span>
@@ -537,7 +529,7 @@ function DashboardScreen({ user, onNavigate, onNewReservation }: { user: User; o
 
 // ─── Agenda Screen ────────────────────────────────────────────────────────────
 
-function AgendaScreen({ onNewReservation }: { onNewReservation: (spaceId?: string, date?: string, hour?: string) => void }) {
+function AgendaScreen({ onNewReservation, reservations }: { onNewReservation: (spaceId?: string, date?: string, hour?: string) => void; reservations: Reservation[] }) {
   const [view, setView] = useState<'day' | 'week'>('week')
   const [currentDate, setCurrentDate] = useState(today)
   const [filterType, setFilterType] = useState<SpaceType | 'ALL'>('ALL')
@@ -552,7 +544,7 @@ function AgendaScreen({ onNewReservation }: { onNewReservation: (spaceId?: strin
   }
 
   function getReservationForSlot(spaceId: string, date: string, hour: string): Reservation | undefined {
-    return RESERVATIONS.find(r => r.spaceId === spaceId && r.date === date && r.startAt <= hour && r.endAt > hour && (r.status === 'APPROVED' || r.status === 'PENDING'))
+    return reservations.find(r => r.spaceId === spaceId && r.date === date && r.startAt <= hour && r.endAt > hour && (r.status === 'APPROVED' || r.status === 'PENDING'))
   }
 
   const displayDays = view === 'day' ? [currentDate] : weekDays
@@ -639,7 +631,7 @@ function AgendaScreen({ onNewReservation }: { onNewReservation: (spaceId?: strin
 
 // ─── Spaces Screen ────────────────────────────────────────────────────────────
 
-function SpacesScreen({ user, onNewReservation }: { user: User; onNewReservation: (spaceId?: string) => void }) {
+function SpacesScreen({ user, onNewReservation, reservations }: { user: User; onNewReservation: (spaceId?: string) => void; reservations: Reservation[] }) {
   const [filterType, setFilterType] = useState<SpaceType | 'ALL'>('ALL')
   const [search, setSearch] = useState('')
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null)
@@ -649,7 +641,7 @@ function SpacesScreen({ user, onNewReservation }: { user: User; onNewReservation
   const filtered = SPACES.filter(s => s.active && (filterType === 'ALL' || s.type === filterType) && (search === '' || s.name.toLowerCase().includes(search.toLowerCase())))
 
   function isAvailableNow(s: Space) {
-    return !RESERVATIONS.some(r => r.spaceId === s.id && r.date === today && r.status === 'APPROVED')
+    return !reservations.some(r => r.spaceId === s.id && r.date === today && r.status === 'APPROVED')
   }
 
   return (
@@ -669,49 +661,16 @@ function SpacesScreen({ user, onNewReservation }: { user: User; onNewReservation
       {/* Grid */}
       {filtered.length === 0 ? <EmptyState icon="🏫" title="Nenhum espaço encontrado" sub="Tente ajustar os filtros acima" /> : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
-          {filtered.map(s => {
-            const avail = isAvailableNow(s)
-            return (
-              <div key={s.id} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s, transform 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
-                {/* Header band */}
-                <div style={{ height: 4, background: s.type === 'LAB' ? '#1a56a4' : s.type === 'LIBRARY' ? '#1a7a4a' : '#5b21b6' }} />
-                <div style={{ padding: '18px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <h3 style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-1)', lineHeight: 1.3, flex: 1 }}>{s.name}</h3>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <SpaceTypeBadge type={s.type} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: avail ? 'var(--status-approved-text)' : 'var(--status-rejected-text)', background: avail ? 'var(--status-approved-bg)' : 'var(--status-rejected-bg)', padding: '2px 10px', borderRadius: 20 }}>
-                      {avail ? '● Disponível' : '● Ocupado'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14, fontSize: 13, color: 'var(--text-2)' }}>
-                    <div>📍 {s.location}</div>
-                    <div>👥 Capacidade: <strong>{s.capacity} pessoas</strong></div>
-                    {s.requiresApproval && <div style={{ color: 'var(--status-pending-text)', fontWeight: 600 }}>⚠️ Requer aprovação</div>}
-                  </div>
-                  {/* Equipment chips */}
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Equipamentos</div>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>{s.equipment.map(e => <Chip key={e} label={e} />)}</div>
-                  </div>
-                  {/* Software chips */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Softwares</div>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>{s.software.map(sw => <Chip key={sw} label={sw} />)}</div>
-                  </div>
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Btn variant="primary" small onClick={() => onNewReservation(s.id)}>Reservar</Btn>
-                    <Btn variant="secondary" small onClick={() => setSelectedSpace(s)}>Ver detalhes</Btn>
-                    {isAdmin && <Btn variant="ghost" small>Editar</Btn>}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+          {filtered.map(s => (
+            <SpaceCard 
+              key={s.id} 
+              space={s} 
+              isAvailable={isAvailableNow(s)} 
+              isAdmin={isAdmin} 
+              onReserve={(id) => onNewReservation(id)} 
+              onViewDetails={(space) => setSelectedSpace(space)} 
+            />
+          ))}
         </div>
       )}
 
@@ -763,7 +722,7 @@ function SpacesScreen({ user, onNewReservation }: { user: User; onNewReservation
 
 // ─── New Reservation Modal ────────────────────────────────────────────────────
 
-function NewReservationModal({ onClose, onSuccess, preSpaceId, preDate, preHour }: { onClose: () => void; onSuccess: (msg: string) => void; preSpaceId?: string; preDate?: string; preHour?: string }) {
+function NewReservationModal({ onClose, onSuccess, preSpaceId, preDate, preHour, reservations }: { onClose: () => void; onSuccess: (msg: string, res?: Reservation) => void; preSpaceId?: string; preDate?: string; preHour?: string; reservations: Reservation[] }) {
   const [spaceId, setSpaceId] = useState(preSpaceId ?? '')
   const [date, setDate] = useState(preDate ?? today)
   const [startAt, setStartAt] = useState(preHour ?? '07:30')
@@ -774,13 +733,17 @@ function NewReservationModal({ onClose, onSuccess, preSpaceId, preDate, preHour 
 
   const space = SPACES.find(s => s.id === spaceId)
 
-  const conflict = spaceId && RESERVATIONS.some(r => r.spaceId === spaceId && r.date === date && r.status !== 'CANCELLED' && r.status !== 'REJECTED' && !(endAt <= r.startAt || startAt >= r.endAt))
+  const conflict = spaceId && reservations.some(r => r.spaceId === spaceId && r.date === date && r.status !== 'CANCELLED' && r.status !== 'REJECTED' && !(endAt <= r.startAt || startAt >= r.endAt))
   const overCapacity = space && participants > space.capacity
 
   function handleSubmit() {
     if (conflict || overCapacity || !spaceId || !purpose) return
     const requiresApproval = space?.requiresApproval
-    onSuccess(requiresApproval ? 'Solicitação enviada! Aguardando aprovação do responsável.' : 'Reserva criada com sucesso! 🎉')
+    const newRes: Reservation = {
+      id: `r${Date.now()}`, spaceId: spaceId, userId: 'u1', title: purpose.split('\n')[0], purpose,
+      startAt, endAt, participants, status: requiresApproval ? 'PENDING' : 'APPROVED', date
+    }
+    onSuccess(requiresApproval ? 'Solicitação enviada! Aguardando aprovação do responsável.' : 'Reserva criada com sucesso! 🎉', newRes)
     onClose()
   }
 
@@ -856,9 +819,8 @@ function NewReservationModal({ onClose, onSuccess, preSpaceId, preDate, preHour 
 
 // ─── My Reservations Screen ───────────────────────────────────────────────────
 
-function MyReservationsScreen({ user, onNewReservation }: { user: User; onNewReservation: () => void }) {
+function MyReservationsScreen({ user, onNewReservation, reservations, setReservations }: { user: User; onNewReservation: () => void; reservations: Reservation[]; setReservations: React.Dispatch<React.SetStateAction<Reservation[]>> }) {
   const [filterStatus, setFilterStatus] = useState<ReservationStatus | 'ALL'>('ALL')
-  const [reservations, setReservations] = useState(RESERVATIONS)
   const [confirm, setConfirm] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -963,21 +925,7 @@ function AcademicScreen({ user }: { user: User }) {
               <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>Próximos eventos</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {upcoming.map(ev => (
-                  <div key={ev.id} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 20px', display: 'flex', gap: 16, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 10, background: EVENT_TYPE_COLORS[ev.type].bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: EVENT_TYPE_COLORS[ev.type].text, lineHeight: 1 }}>{ev.date.slice(8)}</div>
-                      <div style={{ fontSize: 11, color: EVENT_TYPE_COLORS[ev.type].text, fontWeight: 700, textTransform: 'uppercase' }}>{MONTH_NAMES[parseInt(ev.date.slice(5, 7)) - 1].slice(0, 3)}</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <EventBadge type={ev.type} />
-                        {ev.time && <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 600, fontFamily: 'Inter' }}>🕐 {ev.time}</span>}
-                      </div>
-                      <h4 style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{ev.title}</h4>
-                      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 4 }}>📚 {ev.subject}</p>
-                      <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>{ev.description}</p>
-                    </div>
-                  </div>
+                  <EventCard key={ev.id} event={ev} />
                 ))}
               </div>
             </div>
@@ -1062,9 +1010,8 @@ function AcademicScreen({ user }: { user: User }) {
 
 // ─── Admin Screen ─────────────────────────────────────────────────────────────
 
-function AdminScreen({ user }: { user: User }) {
+function AdminScreen({ user, reservations, setReservations }: { user: User; reservations: Reservation[]; setReservations: React.Dispatch<React.SetStateAction<Reservation[]>> }) {
   const [tab, setTab] = useState<'spaces' | 'users' | 'reservations' | 'events'>('spaces')
-  const [reservations, setReservations] = useState(RESERVATIONS)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [showNewSpace, setShowNewSpace] = useState(false)
 
@@ -1283,6 +1230,7 @@ function AdminScreen({ user }: { user: User }) {
 // ─── App Shell ────────────────────────────────────────────────────────────────
 
 function AppShell({ user, onSwitchProfile }: { user: User; onSwitchProfile: () => void }) {
+  const [reservations, setReservations] = useState<Reservation[]>(RESERVATIONS)
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showNewReservation, setShowNewReservation] = useState(false)
@@ -1327,12 +1275,12 @@ function AppShell({ user, onSwitchProfile }: { user: User; onSwitchProfile: () =
         <Topbar title={title} subtitle={subtitle} onNewReservation={() => openNewReservation()} onMenuToggle={() => setSidebarOpen(v => !v)} canReserve={canReserve} />
 
         <main style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {screen === 'dashboard' && <DashboardScreen user={user} onNavigate={setScreen} onNewReservation={() => openNewReservation()} />}
-          {screen === 'agenda' && <AgendaScreen onNewReservation={openNewReservation} />}
-          {screen === 'spaces' && <SpacesScreen user={user} onNewReservation={spaceId => openNewReservation(spaceId)} />}
-          {screen === 'my-reservations' && <MyReservationsScreen user={user} onNewReservation={() => openNewReservation()} />}
+          {screen === 'dashboard' && <DashboardScreen user={user} onNavigate={setScreen} onNewReservation={() => openNewReservation()} reservations={reservations} />}
+          {screen === 'agenda' && <AgendaScreen onNewReservation={openNewReservation} reservations={reservations} />}
+          {screen === 'spaces' && <SpacesScreen user={user} onNewReservation={spaceId => openNewReservation(spaceId)} reservations={reservations} />}
+          {screen === 'my-reservations' && <MyReservationsScreen user={user} onNewReservation={() => openNewReservation()} reservations={reservations} setReservations={setReservations} />}
           {screen === 'academic' && <AcademicScreen user={user} />}
-          {screen === 'admin' && <AdminScreen user={user} />}
+          {screen === 'admin' && <AdminScreen user={user} reservations={reservations} setReservations={setReservations} />}
         </main>
       </div>
 
@@ -1344,10 +1292,14 @@ function AppShell({ user, onSwitchProfile }: { user: User; onSwitchProfile: () =
       {showNewReservation && (
         <NewReservationModal
           onClose={() => setShowNewReservation(false)}
-          onSuccess={msg => setToast({ msg, type: 'success' })}
+          onSuccess={(msg, newRes) => {
+            setToast({ msg, type: 'success' })
+            if (newRes) setReservations(prev => [...prev, newRes])
+          }}
           preSpaceId={preSpaceId}
           preDate={preDate}
           preHour={preHour}
+          reservations={reservations}
         />
       )}
 
